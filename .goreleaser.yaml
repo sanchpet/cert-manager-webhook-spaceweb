@@ -1,0 +1,90 @@
+version: 2
+
+project_name: cert-manager-webhook-spaceweb
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  # NOTE: main.go is expected at the repo root (mirrors cert-manager/webhook-example,
+  # package main). If the solver's main package lives under ./cmd/<name>, point
+  # `main` there — and update ./Dockerfile's build target to match.
+  - binary: webhook
+    main: .
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+
+# GoReleaser cross-compiles the static binary, then packages it per-arch via the
+# minimal Dockerfile.goreleaser (buildx + QEMU set up in the release workflow).
+dockers:
+  - id: amd64
+    goos: linux
+    goarch: amd64
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    image_templates:
+      - "ghcr.io/sanchpet/cert-manager-webhook-spaceweb:{{ .Version }}-amd64"
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.source=https://github.com/sanchpet/cert-manager-webhook-spaceweb"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+  - id: arm64
+    goos: linux
+    goarch: arm64
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    image_templates:
+      - "ghcr.io/sanchpet/cert-manager-webhook-spaceweb:{{ .Version }}-arm64"
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.source=https://github.com/sanchpet/cert-manager-webhook-spaceweb"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+
+docker_manifests:
+  - name_template: "ghcr.io/sanchpet/cert-manager-webhook-spaceweb:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/sanchpet/cert-manager-webhook-spaceweb:{{ .Version }}-amd64"
+      - "ghcr.io/sanchpet/cert-manager-webhook-spaceweb:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/sanchpet/cert-manager-webhook-spaceweb:latest"
+    image_templates:
+      - "ghcr.io/sanchpet/cert-manager-webhook-spaceweb:{{ .Version }}-amd64"
+      - "ghcr.io/sanchpet/cert-manager-webhook-spaceweb:{{ .Version }}-arm64"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+
+release:
+  github:
+    owner: sanchpet
+    name: cert-manager-webhook-spaceweb
+  # release-please creates the GitHub Release (with the changelog) first; GoReleaser
+  # then uploads the binaries/checksums to it. keep-existing = don't recreate/error.
+  mode: keep-existing
