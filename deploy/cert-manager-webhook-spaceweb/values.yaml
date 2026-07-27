@@ -1,0 +1,39 @@
+# The GROUP_NAME used by this webhook. MUST match the group of the APIService
+# and the dns01.webhook.groupName of any Issuer that targets this solver.
+groupName: acme.sweb.ru
+
+certManager:
+  # Namespace where cert-manager is deployed. The webhook grants cert-manager's
+  # ServiceAccount permission to invoke the extension API (domain-solver).
+  namespace: cert-manager
+  # ServiceAccount that cert-manager's controller runs as, in that namespace.
+  serviceAccountName: cert-manager
+
+image:
+  repository: ghcr.io/sanchpet/cert-manager-webhook-spaceweb
+  # Defaults to the chart appVersion when left empty.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+# klog verbosity passed to the webhook apiserver (--v).
+logLevel: 2
+
+service:
+  type: ClusterIP
+  port: 443
+
+resources: {}
+  # limits:
+  #   memory: 64Mi
+  # requests:
+  #   cpu: 10m
+  #   memory: 64Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
