@@ -1,0 +1,21 @@
+# Build output
+/dist/
+/bin/
+*.test
+*.out
+# `go build .` drops a binary named after the module dir; the container names it "webhook"
+/cert-manager-webhook-spaceweb
+/webhook
+
+# Go
+/vendor/
+
+# Local env / secrets — never commit real SpaceWeb credentials
+*.local
+.env
+_local/
+
+# Editor / OS
+.DS_Store
+.idea/
+*.swp
