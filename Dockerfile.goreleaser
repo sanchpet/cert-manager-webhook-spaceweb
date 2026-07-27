@@ -1,0 +1,8 @@
+# Release-only image. GoReleaser cross-compiles the static binary itself and drops
+# it in the build context, so this stage only packages it. The from-source build
+# used by CI and local `docker build` lives in ./Dockerfile — keep this runtime
+# stage identical to that one.
+FROM gcr.io/distroless/static:nonroot
+COPY webhook /webhook
+USER 65532:65532
+ENTRYPOINT ["/webhook"]

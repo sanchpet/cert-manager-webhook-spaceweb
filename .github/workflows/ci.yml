@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          install: true
+          cache: true
+      - name: Lint
+        run: mise run lint
+      - name: Test
+        run: mise run test
+      - name: Build
+        run: mise run build
+
+  # Exercise the multi-stage Dockerfile on every PR without publishing: build for
+  # the runner's arch and load into the local daemon (push stays off).
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          push: false
+          tags: cert-manager-webhook-spaceweb:ci
+          build-args: |
+            VERSION=ci
+
+  # Helm chart must lint clean (mise provides the pinned helm).
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          install: true
+          cache: true
+      - name: Helm lint
+        run: mise run chart-lint

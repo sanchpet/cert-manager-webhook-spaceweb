@@ -1,0 +1,20 @@
+# A wildcard certificate issued via the SpaceWeb DNS-01 webhook.
+#
+# The apex + wildcard SANs make cert-manager present two _acme-challenge TXT
+# records concurrently; the solver serialises writes per zone so both succeed.
+# Expect issuance to take a while: SpaceWeb DNS propagation is ~20 minutes.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: example-com-wildcard
+  namespace: default
+spec:
+  secretName: example-com-wildcard-tls
+  issuerRef:
+    name: letsencrypt-sweb
+    kind: ClusterIssuer
+    group: cert-manager.io
+  commonName: example.com
+  dnsNames:
+    - example.com
+    - "*.example.com"

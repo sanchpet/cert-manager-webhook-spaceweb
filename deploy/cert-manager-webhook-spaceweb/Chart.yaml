@@ -1,0 +1,17 @@
+apiVersion: v2
+name: cert-manager-webhook-spaceweb
+description: A cert-manager ACME DNS-01 webhook solver for SpaceWeb (sweb.ru) DNS.
+type: application
+# version is the chart version; appVersion tracks the solver/image release.
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - cert-manager
+  - acme
+  - dns01
+  - webhook
+  - spaceweb
+  - sweb
+home: https://github.com/sanchpet/cert-manager-webhook-spaceweb
+sources:
+  - https://github.com/sanchpet/cert-manager-webhook-spaceweb

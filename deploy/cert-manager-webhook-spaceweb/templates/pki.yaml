@@ -1,0 +1,58 @@
+---
+# Self-signed Issuer: root of the local trust chain for the webhook's serving cert.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "cert-manager-webhook-spaceweb.selfSignedIssuer" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cert-manager-webhook-spaceweb.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+# CA Certificate signed by the self-signed Issuer.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "cert-manager-webhook-spaceweb.rootCACertificate" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cert-manager-webhook-spaceweb.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "cert-manager-webhook-spaceweb.rootCACertificate" . }}
+  duration: 43800h # 5y
+  issuerRef:
+    name: {{ include "cert-manager-webhook-spaceweb.selfSignedIssuer" . }}
+  commonName: "ca.cert-manager-webhook-spaceweb.cert-manager"
+  isCA: true
+---
+# CA Issuer: signs the webhook serving Certificate.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "cert-manager-webhook-spaceweb.rootCAIssuer" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cert-manager-webhook-spaceweb.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ include "cert-manager-webhook-spaceweb.rootCACertificate" . }}
+---
+# Serving Certificate for the webhook Service; its CA is injected into the
+# APIService caBundle by ca-injector.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "cert-manager-webhook-spaceweb.servingCertificate" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cert-manager-webhook-spaceweb.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "cert-manager-webhook-spaceweb.servingCertificate" . }}
+  duration: 8760h # 1y
+  issuerRef:
+    name: {{ include "cert-manager-webhook-spaceweb.rootCAIssuer" . }}
+  dnsNames:
+    - {{ include "cert-manager-webhook-spaceweb.fullname" . }}
+    - {{ include "cert-manager-webhook-spaceweb.fullname" . }}.{{ .Release.Namespace }}
+    - {{ include "cert-manager-webhook-spaceweb.fullname" . }}.{{ .Release.Namespace }}.svc
