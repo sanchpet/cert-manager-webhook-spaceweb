@@ -1,0 +1,26 @@
+# An ACME ClusterIssuer that solves DNS-01 challenges via the SpaceWeb webhook.
+#
+# For a ClusterIssuer, the sweb-credentials Secret must live in cert-manager's
+# namespace (the cluster resource namespace, default: cert-manager).
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-sweb
+spec:
+  acme:
+    # Use the staging endpoint while testing to avoid rate limits:
+    # server: https://acme-staging-v02.api.letsencrypt.org/directory
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: you@example.com
+    privateKeySecretRef:
+      name: letsencrypt-sweb-account-key
+    solvers:
+      - dns01:
+          webhook:
+            groupName: acme.sweb.ru
+            solverName: spaceweb
+            config:
+              # apiUrl is optional; defaults to https://api.sweb.ru
+              # apiUrl: https://api.sweb.ru
+              secretRef:
+                name: sweb-credentials
